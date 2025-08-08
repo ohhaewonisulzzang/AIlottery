@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>키패드 로그인</title>
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-primary: rgba(255, 255, 255, 0.95);
+            --text-secondary: rgba(255, 255, 255, 0.75);
+            
+            /* 최적화된 테마 색상 */
+            --bg-color1: #667eea;
+            --bg-color2: #764ba2;
+            --bg-color3: #f093fb;
+            --animation-speed: 15s;
+            --motion-enabled: running;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            background: var(--bg-color2);
+        }
+
+        /* 최적화된 배경 애니메이션 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, 
+                var(--bg-color1) 0%, 
+                var(--bg-color2) 50%, 
+                var(--bg-color3) 100%);
+            animation: optimizedFloat var(--animation-speed) ease-in-out infinite;
+            animation-play-state: var(--motion-enabled);
+            will-change: transform;
+            z-index: -1;
+        }
+
+        @keyframes optimizedFloat {
+            0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+            25% { transform: translate3d(-5%, -5%, 0) rotate(1deg); }
+            50% { transform: translate3d(-10%, 0%, 0) rotate(0deg); }
+            75% { transform: translate3d(-5%, 5%, 0) rotate(-1deg); }
+        }
+
+        /* 진짜 유리 같은 글라스 효과 */
+        .liquid-glass {
+            background: linear-gradient(145deg, 
+                rgba(255, 255, 255, 0.25) 0%,
+                rgba(255, 255, 255, 0.1) 25%,
+                rgba(255, 255, 255, 0.05) 75%,
+                rgba(255, 255, 255, 0.15) 100%);
+            backdrop-filter: blur(18px) saturate(1.8) brightness(1.1);
+            -webkit-backdrop-filter: blur(18px) saturate(1.8) brightness(1.1);
+            border-radius: 24px;
+            border: 1.5px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 
+                0 12px 40px rgba(0, 0, 0, 0.15),
+                0 2px 8px rgba(0, 0, 0, 0.1),
+                inset 0 2px 0 rgba(255, 255, 255, 0.6),
+                inset 0 -1px 0 rgba(255, 255, 255, 0.2),
+                inset 1px 0 0 rgba(255, 255, 255, 0.3),
+                inset -1px 0 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        .liquid-glass::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, 
+                transparent 0%,
+                rgba(255, 255, 255, 0.8) 20%,
+                rgba(255, 255, 255, 0.9) 50%,
+                rgba(255, 255, 255, 0.8) 80%,
+                transparent 100%);
+            border-radius: 24px 24px 0 0;
+            filter: blur(0.5px);
+        }
+
+        .liquid-glass::after {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: 5%;
+            width: 25%;
+            height: 40%;
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.4) 0%,
+                rgba(255, 255, 255, 0.1) 100%);
+            border-radius: 50% 20% 40% 30%;
+            filter: blur(8px);
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .login-screen, .main-screen {
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .login-screen {
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .main-screen {
+            max-width: 900px;
+            width: 95%;
+            display: none;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        /* 설정 UI */
+        .settings-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            font-size: 20px;
+            color: var(--text-primary);
+        }
+
+        .settings-btn:hover {
+            transform: scale(1.1) rotate(90deg);
+        }
+
+        .settings-panel {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 300px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(8px);
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            padding: 25px;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .settings-panel h4 {
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .theme-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .theme-option {
+            height: 50px;
+            border-radius: 12px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .theme-option:hover {
+            transform: scale(1.05);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .theme-option.active {
+            border-color: rgba(255, 255, 255, 0.8);
+        }
+
+        .theme-option::after {
+            content: attr(data-name);
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+        }
+
+        /* 최적화된 테마 (3색상 이하) */
+        .theme-default { background: linear-gradient(135deg, #667eea, #764ba2, #f093fb); }
+        .theme-ocean { background: linear-gradient(135deg, #2193b0, #6dd5ed, #4facfe); }
+        .theme-sunset { background: linear-gradient(135deg, #ff9a56, #ff6b95, #c471f5); }
+        .theme-forest { background: linear-gradient(135deg, #134e5e, #71b280, #a8edea); }
+        .theme-fire { background: linear-gradient(135deg, #ff416c, #ff4b2b, #ff8a00); }
+        .theme-aurora { background: linear-gradient(135deg, #0B1426, #2B5B84, #00FF88); }
+
+        .motion-controls {
+            margin-bottom: 20px;
+        }
+
+        .motion-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 25px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: rgba(100, 255, 100, 0.3);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 21px;
+            height: 21px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(25px);
+        }
+
+        .speed-slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .speed-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+        }
+
+        .close-settings {
+            background: rgba(255, 100, 100, 0.2);
+            border: 1px solid rgba(255, 100, 100, 0.4);
+            border-radius: 10px;
+            color: var(--text-primary);
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            font-size: 14px;
+        }
+
+        /* 텍스트 스타일 */
+        h1, h2, h3 {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        h1 { font-size: 28px; margin-bottom: 30px; }
+        h2 { font-size: 32px; margin-bottom: 20px; }
+        h3 { font-size: 20px; margin-bottom: 15px; }
+
+        /* 최적화된 UI 컴포넌트들 */
+        .password-display {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            border: 1px solid var(--glass-border);
+            padding: 20px;
+            margin-bottom: 30px;
+            font-size: 24px;
+            font-family: 'SF Mono', Monaco, monospace;
+            letter-spacing: 8px;
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-primary);
+        }
+
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .key, .btn, .lotto-key {
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 15px;
+            border: 1px solid var(--glass-border);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-primary);
+            font-weight: 600;
+            transform: translateZ(0); /* GPU 가속 */
+        }
+
+        .key {
+            padding: 20px;
+            font-size: 20px;
+        }
+
+        .key:hover, .btn:hover, .lotto-key:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.18);
+        }
+
+        .key:active, .btn:active, .lotto-key:active {
+            transform: translateY(0);
+            background: rgba(120, 140, 255, 0.3);
+        }
+
+        .key.zero {
+            grid-column: span 2;
+        }
+
+        .btn {
+            padding: 15px 25px;
+            font-size: 16px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn-clear {
+            flex: 1;
+            background: rgba(255, 100, 100, 0.15);
+        }
+
+        .btn-login {
+            flex: 1;
+            background: rgba(100, 255, 100, 0.15);
+        }
+
+        .btn-logout {
+            background: rgba(100, 150, 255, 0.15);
+            margin: 20px auto 0;
+            display: block;
+            width: 200px;
+        }
+
+        /* 정보 섹션 */
+        .time-weather {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .current-time, .weather-info {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+            border: 1px solid var(--glass-border);
+            padding: 25px;
+        }
+
+        .time-display {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-family: 'SF Mono', Monaco, monospace;
+        }
+
+        .date-display {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        .weather-item {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 16px;
+            margin: 8px 0;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* 로또 섹션 */
+        .lotto-section {
+            background: rgba(120, 140, 255, 0.1);
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            padding: 35px;
+            margin: 30px 0;
+        }
+
+        .lotto-keypad {
+            display: flex;
+            justify-content: center;
+            gap: 3px;
+            margin-bottom: 35px;
+            flex-wrap: wrap;
+        }
+
+        .lotto-key {
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 700;
+            border-radius: 18px;
+        }
+
+        .lotto-results {
+            margin: 25px 0;
+            min-height: 200px;
+        }
+
+        .lotto-line {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            border: 1px solid var(--glass-border);
+            animation: slideIn 0.4s ease forwards;
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .lotto-numbers {
+            display: flex;
+            gap: 3px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .ball {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 13px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateZ(0);
+    position: relative;
+    border: 1.5px solid rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(6px) saturate(1.4);
+    box-shadow: 
+        0 8px 25px rgba(0, 0, 0, 0.25),
+        0 3px 8px rgba(0, 0, 0, 0.15),
+        inset 0 3px 0 rgba(255, 255, 255, 0.6),
+        inset 0 -2px 0 rgba(0, 0, 0, 0.3),
+        inset 2px 0 0 rgba(255, 255, 255, 0.2),
+        inset -2px 0 0 rgba(0, 0, 0, 0.1);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.ball::before {
+    content: '';
+    position: absolute;
+    top: 14%;
+    left: 18%;
+    width: 30%;
+    height: 30%;
+    background: radial-gradient(circle, 
+        rgba(255, 255, 255, 0.9) 0%,
+        rgba(255, 255, 255, 0.6) 40%,
+        transparent 70%);
+    border-radius: 50%;
+    filter: blur(1px);
+    pointer-events: none;
+}
+
+        .ball::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 50%;
+            background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.4) 0%,
+                rgba(255, 255, 255, 0.1) 30%,
+                transparent 60%,
+                rgba(0, 0, 0, 0.2) 100%);
+            pointer-events: none;
+        }
+
+        .ball:hover {
+            transform: scale(1.12) translateZ(8px);
+            box-shadow: 
+                0 12px 40px rgba(0, 0, 0, 0.3),
+                0 6px 15px rgba(0, 0, 0, 0.2),
+                inset 0 3px 0 rgba(255, 255, 255, 0.7),
+                inset 0 -2px 0 rgba(0, 0, 0, 0.3),
+                inset 2px 0 0 rgba(255, 255, 255, 0.3),
+                inset -2px 0 0 rgba(0, 0, 0, 0.1);
+        }
+
+        /* 글라스 효과가 적용된 로또 색상 */
+        .ball-yellow { 
+            background: linear-gradient(135deg, 
+                rgba(255, 215, 0, 0.85) 0%, 
+                rgba(255, 165, 0, 0.9) 100%);
+        }
+        
+        .ball-blue { 
+            background: linear-gradient(135deg, 
+                rgba(65, 105, 225, 0.85) 0%, 
+                rgba(30, 144, 255, 0.9) 100%);
+        }
+        
+        .ball-red { 
+            background: linear-gradient(135deg, 
+                rgba(220, 20, 60, 0.85) 0%, 
+                rgba(178, 34, 34, 0.9) 100%);
+        }
+        
+        .ball-gray { 
+            background: linear-gradient(135deg, 
+                rgba(105, 105, 105, 0.85) 0%, 
+                rgba(47, 79, 79, 0.9) 100%);
+        }
+        
+        .ball-green { 
+            background: linear-gradient(135deg, 
+                rgba(50, 205, 50, 0.85) 0%, 
+                rgba(34, 139, 34, 0.9) 100%);
+        }
+
+        .lotto-legend {
+            display: flex;
+            justify-content: center;
+            gap: 3px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 8px 12px;
+        }
+
+        .legend-item .ball {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 13px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateZ(0);
+    position: relative;
+    border: 1.5px solid rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(6px) saturate(1.4);
+    box-shadow: 
+        0 8px 25px rgba(0, 0, 0, 0.25),
+        0 3px 8px rgba(0, 0, 0, 0.15),
+        inset 0 3px 0 rgba(255, 255, 255, 0.6),
+        inset 0 -2px 0 rgba(0, 0, 0, 0.3),
+        inset 2px 0 0 rgba(255, 255, 255, 0.2),
+        inset -2px 0 0 rgba(0, 0, 0, 0.1);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.ball::before {
+    content: '';
+    position: absolute;
+    top: 14%;
+    left: 18%;
+    width: 30%;
+    height: 30%;
+    background: radial-gradient(circle, 
+        rgba(255, 255, 255, 0.9) 0%,
+        rgba(255, 255, 255, 0.6) 40%,
+        transparent 70%);
+    border-radius: 50%;
+    filter: blur(1px);
+    pointer-events: none;
+}
+
+        .lotto-mode {
+            margin-top: 30px;
+            padding: 25px;
+            background: rgba(255, 193, 7, 0.1);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-left: 4px solid rgba(255, 193, 7, 0.6);
+        }
+
+        .btn-mode {
+            background: rgba(255, 193, 7, 0.15);
+            border: 1px solid rgba(255, 193, 7, 0.4);
+            border-radius: 10px;
+            color: var(--text-primary);
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        /* 반응형 */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .login-screen, .main-screen {
+                padding: 25px 20px;
+                width: 100%;
+                max-width: none;
+                margin: 0;
+            }
+
+            .main-screen {
+                max-height: calc(100vh - 20px);
+                padding-bottom: 30px;
+            }
+
+            h1 {
+                font-size: 24px;
+                margin-bottom: 25px;
+            }
+
+            h2 {
+                font-size: 28px;
+                margin-bottom: 15px;
+            }
+
+            h3 {
+                font-size: 18px;
+                margin-bottom: 12px;
+            }
+
+            .password-display {
+                padding: 18px 15px;
+                font-size: 20px;
+                letter-spacing: 6px;
+                min-height: 60px;
+                margin-bottom: 25px;
+            }
+
+            .keypad {
+                gap: 12px;
+                margin-bottom: 18px;
+            }
+
+            .key {
+                padding: 18px 15px;
+                font-size: 18px;
+                border-radius: 15px;
+                min-height: 60px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .controls {
+                gap: 12px;
+                margin-top: 18px;
+            }
+
+            .btn {
+                padding: 15px 20px;
+                font-size: 15px;
+                min-height: 50px;
+            }
+
+            .btn-logout {
+                width: 100%;
+                max-width: 250px;
+                margin: 25px auto 0;
+            }
+
+            .time-weather {
+                grid-template-columns: 1fr;
+                gap: 3px;
+                margin-bottom: 30px;
+            }
+
+            .current-time, .weather-info {
+                padding: 20px;
+            }
+
+            .time-display {
+                font-size: 28px;
+            }
+
+            .date-display {
+                font-size: 14px;
+            }
+
+            .weather-item {
+                padding: 10px 14px;
+                font-size: 13px;
+                margin: 6px 0;
+            }
+
+            .lotto-section {
+                padding: 25px 20px;
+                margin: 25px 0;
+            }
+
+            .lotto-keypad {
+                gap: 15px;
+                margin-bottom: 30px;
+            }
+
+            .lotto-key {
+                width: 60px;
+                height: 60px;
+                font-size: 24px;
+                border-radius: 15px;
+            }
+
+            .lotto-line {
+                padding: 18px 15px;
+                margin: 15px 0;
+            }
+
+            .lotto-numbers {
+                gap: 3px;
+            }
+
+            .ball {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 13px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateZ(0);
+    position: relative;
+    border: 1.5px solid rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(6px) saturate(1.4);
+    box-shadow: 
+        0 8px 25px rgba(0, 0, 0, 0.25),
+        0 3px 8px rgba(0, 0, 0, 0.15),
+        inset 0 3px 0 rgba(255, 255, 255, 0.6),
+        inset 0 -2px 0 rgba(0, 0, 0, 0.3),
+        inset 2px 0 0 rgba(255, 255, 255, 0.2),
+        inset -2px 0 0 rgba(0, 0, 0, 0.1);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.ball::before {
+    content: '';
+    position: absolute;
+    top: 14%;
+    left: 18%;
+    width: 30%;
+    height: 30%;
+    background: radial-gradient(circle, 
+        rgba(255, 255, 255, 0.9) 0%,
+        rgba(255, 255, 255, 0.6) 40%,
+        transparent 70%);
+    border-radius: 50%;
+    filter: blur(1px);
+    pointer-events: none;
+}
+
+            .lotto-legend {
+                gap: 12px;
+                margin-top: 20px;
+            }
+
+            .legend-item {
+                font-size: 12px;
+                padding: 6px 10px;
+                flex: 1;
+                min-width: 0;
+                justify-content: center;
+            }
+
+            .legend-item .ball {
+                width: 18px;
+                height: 18px;
+                font-size: 9px;
+                margin-right: 5px;
+            }
+
+            .lotto-mode {
+                padding: 20px 15px;
+                margin-top: 25px;
+            }
+
+            .mode-text {
+                font-size: 14px;
+                margin-bottom: 12px;
+            }
+
+            .btn-mode {
+                padding: 10px 20px;
+                font-size: 13px;
+                width: 100%;
+            }
+
+            .settings-btn {
+                width: 45px;
+                height: 45px;
+                top: 15px;
+                right: 15px;
+                font-size: 18px;
+            }
+
+            .settings-panel {
+                width: calc(100vw - 30px);
+                right: 15px;
+                left: 15px;
+                top: 70px;
+                padding: 20px;
+                max-height: calc(100vh - 100px);
+                overflow-y: auto;
+            }
+
+            .settings-panel h4 {
+                font-size: 16px;
+                margin-bottom: 15px;
+            }
+
+            .theme-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+                margin-bottom: 15px;
+            }
+
+            .theme-option {
+                height: 45px;
+                border-radius: 10px;
+            }
+
+            .theme-option::after {
+                font-size: 10px;
+                bottom: 1px;
+            }
+
+            .motion-controls {
+                margin-bottom: 15px;
+            }
+
+            .motion-toggle {
+                margin-bottom: 12px;
+            }
+
+            .motion-toggle span {
+                font-size: 13px;
+            }
+
+            .toggle-switch {
+                width: 45px;
+                height: 22px;
+            }
+
+            .toggle-switch::after {
+                width: 18px;
+                height: 18px;
+                top: 2px;
+                left: 2px;
+            }
+
+            .toggle-switch.active::after {
+                transform: translateX(23px);
+            }
+
+            .speed-slider {
+                height: 5px;
+            }
+
+            .speed-slider::-webkit-slider-thumb {
+                width: 16px;
+                height: 16px;
+            }
+
+            .close-settings {
+                padding: 10px 16px;
+                font-size: 13px;
+                margin-top: 15px;
+            }
+
+            /* 터치 개선 */
+            .key, .btn, .lotto-key, .theme-option, .toggle-switch {
+                -webkit-tap-highlight-color: transparent;
+                touch-action: manipulation;
+            }
+
+            /* 키패드 0번 키 모바일 최적화 */
+            .key.zero {
+                grid-column: span 2;
+                min-height: 60px;
+            }
+
+            /* 스크롤 개선 */
+            .main-screen {
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+
+            .main-screen::-webkit-scrollbar {
+                display: none;
+            }
+
+            /* 모바일에서 줌 방지 */
+            .password-display,
+            input,
+            button {
+                font-size: 16px;
+            }
+        }
+
+        /* 작은 모바일 (iPhone SE 등) */
+        @media (max-width: 380px) {
+            .login-screen, .main-screen {
+                padding: 20px 15px;
+            }
+
+            .keypad {
+                gap: 10px;
+            }
+
+            .key {
+                padding: 15px 12px;
+                font-size: 16px;
+                min-height: 55px;
+            }
+
+            .lotto-keypad {
+                gap: 12px;
+            }
+
+            .lotto-key {
+                width: 55px;
+                height: 55px;
+                font-size: 22px;
+            }
+
+            .ball {
+                width: 40px;
+                height: 40px;
+                font-size: 13px;
+            }
+
+            .lotto-numbers {
+                gap: 3px;
+            }
+
+            .legend-item {
+                font-size: 11px;
+                padding: 5px 8px;
+            }
+
+            .legend-item .ball {
+                width: 16px;
+                height: 16px;
+                font-size: 8px;
+            }
+
+            .time-display {
+                font-size: 24px;
+            }
+
+            .theme-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .theme-option {
+                height: 40px;
+            }
+        }
+
+        /* 가로 모드 최적화 */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .main-screen {
+                max-height: calc(100vh - 10px);
+                padding: 15px;
+            }
+
+            .settings-panel {
+                max-height: calc(100vh - 80px);
+            }
+
+            .lotto-section {
+                padding: 20px 15px;
+            }
+
+            .time-weather {
+                margin-bottom: 20px;
+            }
+
+            .current-time, .weather-info {
+                padding: 15px;
+            }
+        }
+
+        /* 성능 최적화 */
+        .main-screen::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .main-screen::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .main-screen::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 설정 버튼 -->
+    <div class="settings-btn" id="settingsBtn">⚙️</div>
+
+    <!-- 설정 패널 -->
+    <div class="settings-panel" id="settingsPanel">
+        <h4>🎨 테마 설정</h4>
+        
+        <div class="theme-grid">
+            <div class="theme-option theme-default active" data-theme="default" data-name="기본"></div>
+            <div class="theme-option theme-ocean" data-theme="ocean" data-name="바다"></div>
+            <div class="theme-option theme-sunset" data-theme="sunset" data-name="노을"></div>
+            <div class="theme-option theme-forest" data-theme="forest" data-name="숲"></div>
+            <div class="theme-option theme-fire" data-theme="fire" data-name="불꽃"></div>
+            <div class="theme-option theme-aurora" data-theme="aurora" data-name="오로라"></div>
+        </div>
+
+        <div class="motion-controls">
+            <div class="motion-toggle">
+                <span style="color: var(--text-primary); font-size: 14px;">🌊 움직임 효과</span>
+                <div class="toggle-switch active" id="motionToggle"></div>
+            </div>
+            
+            <label for="speedSlider" style="color: var(--text-primary); font-size: 14px; display: block; margin-bottom: 10px;">⚡ 애니메이션 속도</label>
+            <input type="range" id="speedSlider" class="speed-slider" min="5" max="30" value="15">
+        </div>
+
+        <button class="close-settings" onclick="closeSettings()">닫기</button>
+    </div>
+
+    <!-- 로그인 화면 -->
+    <div class="login-screen liquid-glass" id="loginScreen">
+        <h1>🔐 비밀번호를 입력하세요</h1>
+        <div class="password-display" id="passwordDisplay">****</div>
+        
+        <div class="keypad">
+            <div class="key" onclick="addDigit('1')">1</div>
+            <div class="key" onclick="addDigit('2')">2</div>
+            <div class="key" onclick="addDigit('3')">3</div>
+            <div class="key" onclick="addDigit('4')">4</div>
+            <div class="key" onclick="addDigit('5')">5</div>
+            <div class="key" onclick="addDigit('6')">6</div>
+            <div class="key" onclick="addDigit('7')">7</div>
+            <div class="key" onclick="addDigit('8')">8</div>
+            <div class="key" onclick="addDigit('9')">9</div>
+            <div class="key zero" onclick="addDigit('0')">0</div>
+            <div class="key" onclick="deleteDigit()">⌫</div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn btn-clear" onclick="clearPassword()">전체 삭제</button>
+            <button class="btn btn-login" onclick="login()">로그인</button>
+        </div>
+    </div>
+
+    <!-- 메인 화면 -->
+    <div class="main-screen liquid-glass" id="mainScreen">
+        <h2>🎉 로그인 되었습니다!</h2>
+        
+        <!-- 상단 정보 영역 -->
+        <div class="info-section">
+            <div class="time-weather">
+                <div class="current-time">
+                    <h3>🕐 현재 시간</h3>
+                    <div id="currentTime" class="time-display">--:--:--</div>
+                    <div id="currentDate" class="date-display">----년 --월 --일</div>
+                </div>
+                <div class="weather-info">
+                    <h3>🌤️ 오늘 날씨</h3>
+                    <div id="weatherDisplay" class="weather-display">
+                        <div class="weather-item">온도: 22°C</div>
+                        <div class="weather-item">습도: 65%</div>
+                        <div class="weather-item">상태: 맑음</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 로또 생성기 영역 -->
+        <div class="lotto-section">
+            <h3>🎲 로또 번호 생성기</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 25px; font-size: 15px;">생성할 줄 수를 선택하세요 (1~5줄)</p>
+            
+            <div class="lotto-keypad">
+                <div class="lotto-key" onclick="generateLotto(1)">1</div>
+                <div class="lotto-key" onclick="generateLotto(2)">2</div>
+                <div class="lotto-key" onclick="generateLotto(3)">3</div>
+                <div class="lotto-key" onclick="generateLotto(4)">4</div>
+                <div class="lotto-key" onclick="generateLotto(5)">5</div>
+            </div>
+
+            <div id="lottoResults" class="lotto-results"></div>
+            
+            <div class="lotto-legend">
+                <div class="legend-item"><span class="ball ball-yellow">1-10</span> 노란색</div>
+                <div class="legend-item"><span class="ball ball-blue">11-20</span> 파란색</div>
+                <div class="legend-item"><span class="ball ball-red">21-30</span> 빨간색</div>
+                <div class="legend-item"><span class="ball ball-gray">31-40</span> 회색</div>
+                <div class="legend-item"><span class="ball ball-green">41-45</span> 초록색</div>
+            </div>
+            
+            <div class="lotto-mode">
+                <p style="color: var(--text-primary); margin-bottom: 15px; font-size: 15px;">🎯 <strong>현재 모드:</strong> 2024년 통계 기반 가중치 적용</p>
+                <button class="btn-mode" onclick="toggleMode()">랜덤 모드로 변경</button>
+            </div>
+        </div>
+
+        <!-- 로그아웃 버튼 -->
+        <button class="btn btn-logout" onclick="logout()">로그아웃</button>
+    </div>
+
+    <script>
+        let password = '';
+        const correctPassword = '0114';
+        let isMotionEnabled = true;
+
+        // 최적화된 테마 설정
+        const themes = {
+            default: { colors: ['#667eea', '#764ba2', '#f093fb'] },
+            ocean: { colors: ['#2193b0', '#6dd5ed', '#4facfe'] },
+            sunset: { colors: ['#ff9a56', '#ff6b95', '#c471f5'] },
+            forest: { colors: ['#134e5e', '#71b280', '#a8edea'] },
+            fire: { colors: ['#ff416c', '#ff4b2b', '#ff8a00'] },
+            aurora: { colors: ['#0B1426', '#2B5B84', '#00FF88'] }
+        };
+
+        // DOM 요소 캐싱
+        let cachedElements = {};
+
+        function getElement(id) {
+            if (!cachedElements[id]) {
+                cachedElements[id] = document.getElementById(id);
+            }
+            return cachedElements[id];
+        }
+
+        function showSettings() {
+            getElement('settingsPanel').style.display = 'block';
+        }
+
+        function closeSettings() {
+            getElement('settingsPanel').style.display = 'none';
+        }
+
+        function changeTheme(themeName) {
+            const theme = themes[themeName];
+            if (theme) {
+                const root = document.documentElement;
+                root.style.setProperty('--bg-color1', theme.colors[0]);
+                root.style.setProperty('--bg-color2', theme.colors[1]);
+                root.style.setProperty('--bg-color3', theme.colors[2]);
+                
+                // 활성 테마 표시 업데이트
+                document.querySelectorAll('.theme-option').forEach(option => {
+                    option.classList.remove('active');
+                });
+                document.querySelector(`[data-theme="${themeName}"]`).classList.add('active');
+                
+                // 로컬 스토리지에 저장
+                localStorage.setItem('selectedTheme', themeName);
+            }
+        }
+
+        function toggleMotion() {
+            isMotionEnabled = !isMotionEnabled;
+            const toggle = getElement('motionToggle');
+            const root = document.documentElement;
+            
+            if (isMotionEnabled) {
+                toggle.classList.add('active');
+                root.style.setProperty('--motion-enabled', 'running');
+            } else {
+                toggle.classList.remove('active');
+                root.style.setProperty('--motion-enabled', 'paused');
+            }
+            
+            localStorage.setItem('motionEnabled', isMotionEnabled);
+        }
+
+        function updateAnimationSpeed(speed) {
+            document.documentElement.style.setProperty('--animation-speed', `${speed}s`);
+            localStorage.setItem('animationSpeed', speed);
+        }
+
+        // 최적화된 설정 로드
+        function loadSettings() {
+            const savedTheme = localStorage.getItem('selectedTheme') || 'default';
+            const savedMotion = localStorage.getItem('motionEnabled');
+            const savedSpeed = localStorage.getItem('animationSpeed') || '15';
+            
+            changeTheme(savedTheme);
+            
+            if (savedMotion !== null) {
+                isMotionEnabled = savedMotion === 'true';
+                const toggle = getElement('motionToggle');
+                const root = document.documentElement;
+                
+                if (isMotionEnabled) {
+                    toggle.classList.add('active');
+                    root.style.setProperty('--motion-enabled', 'running');
+                } else {
+                    toggle.classList.remove('active');
+                    root.style.setProperty('--motion-enabled', 'paused');
+                }
+            }
+            
+            getElement('speedSlider').value = savedSpeed;
+            updateAnimationSpeed(savedSpeed);
+        }
+
+        function addDigit(digit) {
+            if (password.length < 10) {
+                password += digit;
+                updateDisplay();
+                
+                // 최적화된 피드백
+                const keys = document.querySelectorAll('.key');
+                keys.forEach(key => {
+                    if (key.textContent === digit) {
+                        key.style.background = 'rgba(120, 140, 255, 0.4)';
+                        setTimeout(() => {
+                            key.style.background = '';
+                        }, 150);
+                    }
+                });
+            }
+        }
+
+        function deleteDigit() {
+            password = password.slice(0, -1);
+            updateDisplay();
+        }
+
+        function clearPassword() {
+            password = '';
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            const display = getElement('passwordDisplay');
+            if (password.length === 0) {
+                display.textContent = '****';
+                display.style.color = 'rgba(255, 255, 255, 0.5)';
+            } else {
+                display.textContent = '●'.repeat(password.length);
+                display.style.color = 'rgba(255, 255, 255, 0.9)';
+            }
+        }
+
+        function login() {
+            if (password === '') {
+                alert('비밀번호를 입력해주세요!');
+                return;
+            }
+
+            if (password === correctPassword) {
+                getElement('loginScreen').style.display = 'none';
+                getElement('mainScreen').style.display = 'block';
+                getElement('settingsBtn').style.display = 'flex';
+                startTimeUpdate();
+                playSuccessSound();
+                loadSettings();
+            } else {
+                alert('비밀번호가 틀렸습니다!');
+                password = '';
+                updateDisplay();
+                
+                const loginScreen = getElement('loginScreen');
+                loginScreen.style.transform = 'translateX(-10px)';
+                setTimeout(() => {
+                    loginScreen.style.transform = 'translateX(10px)';
+                }, 100);
+                setTimeout(() => {
+                    loginScreen.style.transform = '';
+                }, 200);
+            }
+        }
+
+        function logout() {
+            getElement('mainScreen').style.display = 'none';
+            getElement('loginScreen').style.display = 'block';
+            getElement('settingsBtn').style.display = 'none';
+            getElement('settingsPanel').style.display = 'none';
+            password = '';
+            updateDisplay();
+            
+            if (timeInterval) {
+                clearInterval(timeInterval);
+            }
+        }
+
+        let timeInterval;
+
+        function startTimeUpdate() {
+            updateTime();
+            timeInterval = setInterval(updateTime, 1000);
+        }
+
+        function updateTime() {
+            const now = new Date();
+            
+            const timeString = now.toLocaleTimeString('ko-KR');
+            getElement('currentTime').textContent = timeString;
+            
+            const dateString = now.toLocaleDateString('ko-KR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                weekday: 'long'
+            });
+            getElement('currentDate').textContent = dateString;
+        }
+
+        function generateLotto(lines) {
+            const resultsContainer = getElement('lottoResults');
+            resultsContainer.innerHTML = '';
+
+            for (let line = 1; line <= lines; line++) {
+                setTimeout(() => {
+                    const numbers = window.generateLottoNumbers();
+                    const lineElement = createLottoLine(line, numbers);
+                    resultsContainer.appendChild(lineElement);
+                }, (line - 1) * 200);
+            }
+        }
+
+        // 최적화된 로또 번호 생성
+        function generateWeightedLottoNumbers() {
+            const weights = [5,6,10,7,8,11,10,6,7,8,9,7,12,8,10,8,9,1,12,6,8,7,1,9,3,8,7,9,6,10,7,8,11,10,9,8,7,6,3,8,9,7,2,6,8];
+            const weightedNumbers = [];
+            
+            for (let num = 1; num <= 45; num++) {
+                const weight = weights[num - 1];
+                for (let i = 0; i < weight; i++) {
+                    weightedNumbers.push(num);
+                }
+            }
+
+            const selectedNumbers = [];
+            const availableNumbers = [...weightedNumbers];
+
+            while (selectedNumbers.length < 6) {
+                const randomIndex = Math.floor(Math.random() * availableNumbers.length);
+                const selectedNum = availableNumbers[randomIndex];
+                
+                if (!selectedNumbers.includes(selectedNum)) {
+                    selectedNumbers.push(selectedNum);
+                    for (let i = availableNumbers.length - 1; i >= 0; i--) {
+                        if (availableNumbers[i] === selectedNum) {
+                            availableNumbers.splice(i, 1);
+                        }
+                    }
+                }
+            }
+
+            return selectedNumbers.sort((a, b) => a - b);
+        }
+
+        function generateRandomLottoNumbers() {
+            const numbers = [];
+            while (numbers.length < 6) {
+                const num = Math.floor(Math.random() * 45) + 1;
+                if (!numbers.includes(num)) {
+                    numbers.push(num);
+                }
+            }
+            return numbers.sort((a, b) => a - b);
+        }
+
+        function createLottoLine(lineNumber, numbers) {
+            const lineDiv = document.createElement('div');
+            lineDiv.className = 'lotto-line';
+            
+            const numbersDiv = document.createElement('div');
+            numbersDiv.className = 'lotto-numbers';
+            
+            numbers.forEach((num) => {
+                const ball = document.createElement('div');
+                ball.className = `ball ${getBallColor(num)}`;
+                ball.textContent = num;
+                numbersDiv.appendChild(ball);
+            });
+            
+            lineDiv.appendChild(numbersDiv);
+            return lineDiv;
+        }
+
+        function getBallColor(number) {
+            if (number >= 1 && number <= 10) return 'ball-yellow';
+            if (number >= 11 && number <= 20) return 'ball-blue';
+            if (number >= 21 && number <= 30) return 'ball-red';
+            if (number >= 31 && number <= 40) return 'ball-gray';
+            if (number >= 41 && number <= 45) return 'ball-green';
+        }
+
+        let isWeightedMode = true;
+
+        function toggleMode() {
+            isWeightedMode = !isWeightedMode;
+            const modeText = document.querySelector('.lotto-mode p');
+            const modeButton = document.querySelector('.btn-mode');
+            
+            if (isWeightedMode) {
+                modeText.innerHTML = '🎯 <strong>현재 모드:</strong> 2024년 통계 기반 가중치 적용';
+                modeButton.textContent = '랜덤 모드로 변경';
+                window.generateLottoNumbers = generateWeightedLottoNumbers;
+            } else {
+                modeText.innerHTML = '🎲 <strong>현재 모드:</strong> 완전 랜덤 생성';
+                modeButton.textContent = '통계 모드로 변경';
+                window.generateLottoNumbers = generateRandomLottoNumbers;
+            }
+        }
+
+        // 초기 설정
+        window.generateLottoNumbers = generateWeightedLottoNumbers;
+
+        function playSuccessSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.1);
+                
+                gainNode.gain.setValueAtTime(0.03, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.2);
+            } catch(e) {
+                // 오디오 지원하지 않는 경우 무시
+            }
+        }
+
+        // 최적화된 이벤트 리스너
+        document.addEventListener('DOMContentLoaded', function() {
+            // 설정 버튼
+            getElement('settingsBtn').addEventListener('click', showSettings);
+            
+            // 테마 선택 (이벤트 위임)
+            document.querySelector('.theme-grid').addEventListener('click', function(e) {
+                if (e.target.classList.contains('theme-option')) {
+                    changeTheme(e.target.dataset.theme);
+                }
+            });
+            
+            // 모션 토글
+            getElement('motionToggle').addEventListener('click', toggleMotion);
+            
+            // 속도 슬라이더
+            getElement('speedSlider').addEventListener('input', function() {
+                updateAnimationSpeed(this.value);
+            });
+            
+            // 설정 패널 외부 클릭시 닫기
+            document.addEventListener('click', function(event) {
+                const settingsPanel = getElement('settingsPanel');
+                const settingsBtn = getElement('settingsBtn');
+                
+                if (settingsPanel.style.display === 'block' && 
+                    !settingsPanel.contains(event.target) && 
+                    !settingsBtn.contains(event.target)) {
+                    closeSettings();
+                }
+            });
+        });
+
+        // 키보드 지원
+        document.addEventListener('keydown', function(event) {
+            const key = event.key;
+            
+            if (getElement('loginScreen').style.display !== 'none') {
+                if (key >= '0' && key <= '9') {
+                    addDigit(key);
+                } else if (key === 'Backspace') {
+                    event.preventDefault();
+                    deleteDigit();
+                } else if (key === 'Delete') {
+                    event.preventDefault();
+                    clearPassword();
+                } else if (key === 'Enter') {
+                    event.preventDefault();
+                    login();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
